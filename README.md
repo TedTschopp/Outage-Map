@@ -16,12 +16,41 @@ See the [Product Requirements Document](DOCS/PRD/PRD.md) for complete project sp
 
 ## 🚀 Quick Start
 
-### Prerequisites
+### Two Ways to Run
 
+#### 1. **Standalone (No NPM Required)** ⚡
+
+Simply open the file in your browser - no build tools needed:
+
+```bash
+# Clone and open
+git clone https://github.com/TedTschopp/Outage-Map.git
+cd Outage-Map
+# Open index.html in your browser (double-click or use a local server)
+```
+
+Or use Python's built-in server:
+```bash
+python3 -m http.server 8080
+# Visit http://localhost:8080
+```
+
+**Features available:**
+- ✅ OpenStreetMap integration
+- ✅ Geolocation and map centering
+- ✅ Outage detection (mocked)
+- ✅ Basic push notifications
+- ✅ Mobile-responsive design
+
+#### 2. **Enhanced Version (NPM)** 🚀
+
+For the full-featured React application with advanced capabilities:
+
+**Prerequisites:**
 - Node.js 16+ and npm 7+
 - Modern web browser with geolocation support
 
-### Installation & Development
+**Installation & Development:**
 
 ```bash
 cd app
@@ -29,7 +58,16 @@ npm install
 npm run dev
 ```
 
-The application will be available at `http://localhost:5173/`
+The enhanced application will be available at `http://localhost:5173/`
+
+**Additional features:**
+- ✅ React 19 with TypeScript
+- ✅ Advanced state management
+- ✅ Service Worker for enhanced push notifications
+- ✅ Internationalization (i18n) support
+- ✅ Hot module replacement (HMR)
+- ✅ Optimized production builds
+- ✅ Component-based architecture
 
 For complete setup and architecture documentation, see [app/README.md](app/README.md).
 
@@ -37,10 +75,11 @@ For complete setup and architecture documentation, see [app/README.md](app/READM
 
 ```
 Outage-Map/
+├── index.html                  # 🌟 Standalone version (no build required)
 ├── DOCS/
 │   └── PRD/
 │       └── PRD.md              # Product Requirements Document
-├── app/                        # React TypeScript web application
+├── app/                        # 🚀 Enhanced React version (requires NPM)
 │   ├── src/
 │   │   ├── adapters/          # Outage data provider abstraction
 │   │   ├── components/        # React components
@@ -51,6 +90,30 @@ Outage-Map/
 │   └── README.md              # Detailed app documentation
 └── README.md                   # This file
 ```
+
+## 🎨 Progressive Enhancement
+
+This project follows a **progressive enhancement** approach:
+
+### Baseline Experience (index.html)
+- Works in any modern browser
+- No build tools or dependencies required
+- Core functionality: map, geolocation, outage detection
+- ~16KB single HTML file
+- Perfect for quick deployment or testing
+
+### Enhanced Experience (app/)
+- Advanced React architecture with TypeScript
+- Component-based design for maintainability
+- Hot module replacement for development
+- Internationalization support (EN/ES)
+- Service Worker for advanced push notifications
+- Optimized production builds (363KB gzipped)
+- Full test coverage and linting
+
+**Choose based on your needs:**
+- **Quick demo or simple deployment?** → Use `index.html`
+- **Full-featured production app?** → Use `app/` with NPM
 
 ## ✨ Key Features (MVP)
 

@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="Real-time outage map - Check power outage status in your area">
+    <meta name="theme-color" content="#007bff">
+    <title>Outage Map</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        .app-header {
+            background: #007bff;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .app-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .app-main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .map-container {
+            flex: 1;
+            min-height: 300px;
+            position: relative;
+        }
+
+        #map {
+            height: 100%;
+            width: 100%;
+        }
+
+        .info-panel {
+            padding: 1rem;
+            overflow-y: auto;
+            max-height: 50vh;
+            background: white;
+            border-top: 2px solid #e9ecef;
+        }
+
+        /* Loading State */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+        }
+
+        .loading-content {
+            text-align: center;
+            color: white;
+            padding: 2rem;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            margin: 0 auto 1rem;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Outage Status */
+        .outage-status {
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            text-align: center;
+            border: 2px solid;
+        }
+
+        .outage-status.loading {
+            background-color: #f0f0f0;
+            border-color: #ccc;
+            color: #666;
+        }
+
+        .outage-status.outage {
+            background-color: #fff3cd;
+            border-color: #ffc107;
+            color: #856404;
+        }
+
+        .outage-status.no-outage {
+            background-color: #d4edda;
+            border-color: #28a745;
+            color: #155724;
+        }
+
+        .outage-status .status-icon {
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .outage-status h2 {
+            margin: 0.5rem 0;
+            font-size: 1.5rem;
+        }
+
+        .outage-status .status-message {
+            margin: 1rem 0;
+        }
+
+        .outage-details {
+            margin-top: 1rem;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 1rem;
+            border-radius: 4px;
+        }
+
+        .detail-item {
+            margin: 0.5rem 0;
+            display: flex;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        /* Notification Control */
+        .notification-control {
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .notification-control h3 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+            min-height: 48px;
+            background: #007bff;
+            color: white;
+        }
+
+        .btn:hover {
+            background: #0056b3;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Error State */
+        .error-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            z-index: 2000;
+        }
+
+        .error-content {
+            text-align: center;
+            color: white;
+            max-width: 500px;
+        }
+
+        .error-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Desktop Layout */
+        @media (min-width: 768px) {
+            .app-main {
+                flex-direction: row;
+            }
+
+            .map-container {
+                flex: 2;
+            }
+
+            .info-panel {
+                flex: 1;
+                max-width: 400px;
+                max-height: none;
+                border-top: none;
+                border-left: 2px solid #e9ecef;
+            }
+        }
+
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loading" class="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <h1>Outage Map</h1>
+            <p>Requesting location permission...</p>
+        </div>
+    </div>
+
+    <!-- Error Overlay -->
+    <div id="error" class="error-overlay hidden">
+        <div class="error-content">
+            <div class="error-icon">📍</div>
+            <h1>Outage Map</h1>
+            <p class="error-message">Unable to get your location. Please enable location services.</p>
+            <p id="error-details"></p>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="app-container hidden">
+        <header class="app-header">
+            <h1>Outage Map</h1>
+        </header>
+
+        <main class="app-main">
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+
+            <div class="info-panel">
+                <div id="outage-status" class="outage-status loading">
+                    <div class="status-icon">⏳</div>
+                    <h2>Checking outage status...</h2>
+                </div>
+
+                <div id="notification-control" class="notification-control hidden">
+                    <h3>Notification Status</h3>
+                    <button id="enable-notifications" class="btn">
+                        🔔 Enable Notifications
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
+    <script>
+        // Simple Outage Map Application - No NPM Required
+        // Progressive enhancement: Use this standalone version without build tools
+        // For enhanced features, run `npm install && npm run dev` in the /app directory
+
+        const app = {
+            map: null,
+            userLocation: null,
+            outageStatus: null,
+
+            // Initialize the application
+            init() {
+                this.requestLocation();
+            },
+
+            // Request user's location
+            requestLocation() {
+                if (!navigator.geolocation) {
+                    this.showError('Geolocation is not supported by your browser');
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    (position) => this.handleLocationSuccess(position),
+                    (error) => this.handleLocationError(error),
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            },
+
+            // Handle successful location retrieval
+            handleLocationSuccess(position) {
+                this.userLocation = {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude
+                };
+
+                // Hide loading, show app
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+
+                // Initialize map
+                this.initMap();
+
+                // Check outage status
+                this.checkOutageStatus();
+
+                // Show notification control
+                document.getElementById('notification-control').classList.remove('hidden');
+                this.initNotifications();
+            },
+
+            // Handle location error
+            handleLocationError(error) {
+                let message = 'Unable to retrieve your location';
+                
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        message = 'Location permission denied';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        message = 'Location information unavailable';
+                        break;
+                    case error.TIMEOUT:
+                        message = 'Location request timed out';
+                        break;
+                }
+
+                this.showError(message);
+            },
+
+            // Show error overlay
+            showError(message) {
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('error').classList.remove('hidden');
+                document.getElementById('error-details').textContent = message;
+            },
+
+            // Initialize Leaflet map
+            initMap() {
+                this.map = L.map('map').setView(
+                    [this.userLocation.lat, this.userLocation.lng], 
+                    13
+                );
+
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+                    maxZoom: 19
+                }).addTo(this.map);
+
+                L.marker([this.userLocation.lat, this.userLocation.lng])
+                    .addTo(this.map)
+                    .bindPopup('Your Location')
+                    .openPopup();
+            },
+
+            // Check outage status (Mock implementation)
+            async checkOutageStatus() {
+                // Simulate API delay
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Mock logic: simulate outage in LA area
+                const hasOutage = 
+                    this.userLocation.lat >= 33.0 && 
+                    this.userLocation.lat <= 34.0 && 
+                    this.userLocation.lng >= -118.5 && 
+                    this.userLocation.lng <= -117.5;
+
+                if (hasOutage) {
+                    this.outageStatus = {
+                        hasOutage: true,
+                        outageId: 'MOCK-' + Math.floor(Math.random() * 10000),
+                        estimatedRestoreTime: new Date(Date.now() + 2 * 60 * 60 * 1000).toLocaleString(),
+                        affectedCustomers: Math.floor(Math.random() * 5000) + 100,
+                        message: 'Power outage detected in your area. Crews are working to restore service.'
+                    };
+                } else {
+                    this.outageStatus = {
+                        hasOutage: false,
+                        message: 'No outage detected at your location.'
+                    };
+                }
+
+                this.displayOutageStatus();
+            },
+
+            // Display outage status
+            displayOutageStatus() {
+                const statusDiv = document.getElementById('outage-status');
+                const isOutage = this.outageStatus.hasOutage;
+
+                statusDiv.className = `outage-status ${isOutage ? 'outage' : 'no-outage'}`;
+                statusDiv.innerHTML = `
+                    <div class="status-icon">${isOutage ? '⚠️' : '✅'}</div>
+                    <h2>${isOutage ? 'Outage Detected' : 'No Outage Detected'}</h2>
+                    <p class="status-message">${this.outageStatus.message}</p>
+                    ${isOutage ? `
+                        <div class="outage-details">
+                            <div class="detail-item">
+                                <strong>Estimated Restore:</strong>
+                                <span>${this.outageStatus.estimatedRestoreTime}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Affected Customers:</strong>
+                                <span>${this.outageStatus.affectedCustomers.toLocaleString()}</span>
+                            </div>
+                            <div class="detail-item">
+                                <strong>Outage ID:</strong>
+                                <span>${this.outageStatus.outageId}</span>
+                            </div>
+                        </div>
+                    ` : ''}
+                `;
+            },
+
+            // Initialize notifications
+            initNotifications() {
+                const btn = document.getElementById('enable-notifications');
+                
+                if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+                    btn.textContent = '❌ Notifications not supported';
+                    btn.disabled = true;
+                    return;
+                }
+
+                if (Notification.permission === 'granted') {
+                    btn.textContent = '✅ Notifications Enabled';
+                    btn.disabled = true;
+                    return;
+                }
+
+                btn.addEventListener('click', async () => {
+                    try {
+                        const permission = await Notification.requestPermission();
+                        if (permission === 'granted') {
+                            btn.textContent = '✅ Notifications Enabled';
+                            btn.disabled = true;
+                            new Notification('Outage Map', {
+                                body: 'You will receive notifications about outages in your area.',
+                                icon: '/vite.svg'
+                            });
+                        } else {
+                            btn.textContent = '❌ Notifications Denied';
+                            btn.disabled = true;
+                        }
+                    } catch (error) {
+                        console.error('Notification error:', error);
+                        btn.textContent = '❌ Notifications Failed';
+                        btn.disabled = true;
+                    }
+                });
+            }
+        };
+
+        // Start the app when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => app.init());
+        } else {
+            app.init();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,182 @@
+/* Main App Styles */
+
+* {
+  box-sizing: border-box;
+}
+
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+}
+
+.app-header {
+  background: #007bff;
+  color: white;
+  padding: 1rem;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.map-container {
+  flex: 1;
+  min-height: 300px;
+  position: relative;
+}
+
+.info-panel {
+  padding: 1rem;
+  overflow-y: auto;
+  max-height: 50vh;
+  background: white;
+  border-top: 2px solid #e9ecef;
+}
+
+/* Loading State */
+.app-container.loading {
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.loading-content {
+  text-align: center;
+  color: white;
+  padding: 2rem;
+}
+
+.spinner {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 1rem;
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-content h1 {
+  margin: 1rem 0 0.5rem;
+  font-size: 1.75rem;
+}
+
+.loading-content p {
+  margin: 0.5rem 0;
+  font-size: 1rem;
+  opacity: 0.9;
+}
+
+/* Error State */
+.app-container.error {
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  padding: 2rem;
+}
+
+.error-content {
+  text-align: center;
+  color: white;
+  max-width: 500px;
+}
+
+.error-icon {
+  font-size: 4rem;
+  margin-bottom: 1rem;
+}
+
+.error-content h1 {
+  margin: 1rem 0;
+  font-size: 2rem;
+}
+
+.error-message {
+  font-size: 1.25rem;
+  margin: 1rem 0;
+  font-weight: 600;
+}
+
+.error-details {
+  font-size: 1rem;
+  margin: 1rem 0;
+  opacity: 0.9;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+/* Desktop Layout */
+@media (min-width: 768px) {
+  .app-main {
+    flex-direction: row;
+  }
+
+  .map-container {
+    flex: 2;
+    min-height: auto;
+  }
+
+  .info-panel {
+    flex: 1;
+    max-width: 400px;
+    max-height: none;
+    border-top: none;
+    border-left: 2px solid #e9ecef;
+  }
+
+  .app-header h1 {
+    font-size: 1.75rem;
+  }
+}
+
+/* Accessibility - Focus styles */
+*:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
+}
+
+/* Accessibility - Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation: none;
+    border-top-color: transparent;
+  }
+  
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Print styles */
+@media print {
+  .app-header,
+  .info-panel {
+    display: none;
+  }
+
+  .map-container {
+    width: 100%;
+    height: 100vh;
+  }
+}

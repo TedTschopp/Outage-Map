@@ -9,7 +9,14 @@ interface GeolocationState {
   location: Coordinates | null;
   error: string | null;
   loading: boolean;
+  usingFallback?: boolean;
 }
+
+// SCE Corporate Headquarters: 2244 Walnut Grove Ave, Rosemead, CA 91770
+const SCE_HEADQUARTERS: Coordinates = {
+  lat: 34.0517,
+  lng: -118.0732,
+};
 
 export const useGeolocation = () => {
   const [state, setState] = useState<GeolocationState>({
@@ -20,10 +27,12 @@ export const useGeolocation = () => {
 
   useEffect(() => {
     if (!navigator.geolocation) {
+      // Use SCE headquarters as fallback
       setState({
-        location: null,
-        error: 'Geolocation is not supported by your browser',
+        location: SCE_HEADQUARTERS,
+        error: null,
         loading: false,
+        usingFallback: true,
       });
       return;
     }
@@ -36,6 +45,7 @@ export const useGeolocation = () => {
         },
         error: null,
         loading: false,
+        usingFallback: false,
       });
     };
 
@@ -44,20 +54,22 @@ export const useGeolocation = () => {
       
       switch (error.code) {
         case error.PERMISSION_DENIED:
-          errorMessage = 'Location permission denied';
+          errorMessage = 'Location permission denied - using SCE headquarters';
           break;
         case error.POSITION_UNAVAILABLE:
-          errorMessage = 'Location information unavailable';
+          errorMessage = 'Location information unavailable - using SCE headquarters';
           break;
         case error.TIMEOUT:
-          errorMessage = 'Location request timed out';
+          errorMessage = 'Location request timed out - using SCE headquarters';
           break;
       }
 
+      // Use SCE headquarters as fallback instead of showing error
       setState({
-        location: null,
+        location: SCE_HEADQUARTERS,
         error: errorMessage,
         loading: false,
+        usingFallback: true,
       });
     };
 

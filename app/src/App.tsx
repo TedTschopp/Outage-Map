@@ -16,7 +16,7 @@ import './App.css';
 
 function App() {
   const { t } = useTranslation();
-  const { location, error: locationError, loading: locationLoading } = useGeolocation();
+  const { location, error: locationError, loading: locationLoading, usingFallback } = useGeolocation();
   const [outageStatus, setOutageStatus] = useState<OutageStatus | null>(null);
   const [checkingOutage, setCheckingOutage] = useState(false);
 
@@ -52,22 +52,12 @@ function App() {
     );
   }
 
-  // Location error state
-  if (locationError) {
-    return (
-      <div className="app-container error">
-        <div className="error-content" role="alert">
-          <div className="error-icon">📍</div>
-          <h1>{t('app.title')}</h1>
-          <p className="error-message">{t('location.error')}</p>
-          <p className="error-details">{locationError}</p>
-        </div>
-      </div>
-    );
-  }
-
   // Main app view
   if (location) {
+    const markerLabel = usingFallback 
+      ? 'SCE Headquarters (Fallback Location)' 
+      : 'Your Location';
+
     return (
       <div className="app-container">
         <header className="app-header">
@@ -78,11 +68,20 @@ function App() {
           <div className="map-container">
             <MapComponent 
               center={location} 
-              markerLabel={t('location.requesting')}
+              markerLabel={markerLabel}
             />
           </div>
 
           <div className="info-panel">
+            {usingFallback && locationError && (
+              <div className="fallback-notice" role="status" aria-live="polite">
+                <div className="fallback-icon">ℹ️</div>
+                <p><strong>Using Default Location</strong></p>
+                <p>{locationError}</p>
+                <p>Showing SCE Corporate Headquarters: 2244 Walnut Grove Ave, Rosemead, CA 91770</p>
+              </div>
+            )}
+
             <OutageStatusDisplay 
               status={outageStatus} 
               loading={checkingOutage}

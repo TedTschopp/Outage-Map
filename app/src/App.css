@@ -125,6 +125,33 @@
   border-radius: 8px;
 }
 
+/* Fallback Location Notice */
+.fallback-notice {
+  padding: 1rem;
+  margin: 1rem 0;
+  background: #d1ecf1;
+  border: 2px solid #0c5460;
+  border-radius: 8px;
+  color: #0c5460;
+  text-align: center;
+}
+
+.fallback-notice .fallback-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.fallback-notice p {
+  margin: 0.5rem 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.fallback-notice strong {
+  font-weight: 600;
+  font-size: 1.1rem;
+}
+
 /* Desktop Layout */
 @media (min-width: 768px) {
   .app-main {

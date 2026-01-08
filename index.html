@@ -224,6 +224,33 @@
             margin-bottom: 1rem;
         }
 
+        /* Fallback Location Notice */
+        .fallback-notice {
+            padding: 1rem;
+            margin: 1rem 0;
+            background: #d1ecf1;
+            border: 2px solid #0c5460;
+            border-radius: 8px;
+            color: #0c5460;
+            text-align: center;
+        }
+
+        .fallback-notice .fallback-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .fallback-notice p {
+            margin: 0.5rem 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .fallback-notice strong {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
         /* Desktop Layout */
         @media (min-width: 768px) {
             .app-main {
@@ -305,10 +332,17 @@
         // Progressive enhancement: Use this standalone version without build tools
         // For enhanced features, run `npm install && npm run dev` in the /app directory
 
+        // SCE Corporate Headquarters: 2244 Walnut Grove Ave, Rosemead, CA 91770
+        const SCE_HEADQUARTERS = {
+            lat: 34.0517,
+            lng: -118.0732
+        };
+
         const app = {
             map: null,
             userLocation: null,
             outageStatus: null,
+            usingFallback: false,
 
             // Initialize the application
             init() {
@@ -318,7 +352,7 @@
             // Request user's location
             requestLocation() {
                 if (!navigator.geolocation) {
-                    this.showError('Geolocation is not supported by your browser');
+                    this.useFallbackLocation('Geolocation is not supported by your browser');
                     return;
                 }
 
@@ -339,10 +373,49 @@
                     lat: position.coords.latitude,
                     lng: position.coords.longitude
                 };
+                this.usingFallback = false;
 
+                this.showApp();
+            },
+
+            // Handle location error - use fallback instead of showing error
+            handleLocationError(error) {
+                let message = 'Unable to retrieve your location';
+                
+                switch (error.code) {
+                    case error.PERMISSION_DENIED:
+                        message = 'Location permission denied - using SCE headquarters';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        message = 'Location information unavailable - using SCE headquarters';
+                        break;
+                    case error.TIMEOUT:
+                        message = 'Location request timed out - using SCE headquarters';
+                        break;
+                }
+
+                this.useFallbackLocation(message);
+            },
+
+            // Use SCE headquarters as fallback location
+            useFallbackLocation(message) {
+                this.userLocation = SCE_HEADQUARTERS;
+                this.usingFallback = true;
+                this.fallbackMessage = message;
+                this.showApp();
+            },
+
+            // Show the app (called from both success and fallback)
+            showApp() {
                 // Hide loading, show app
                 document.getElementById('loading').classList.add('hidden');
+                document.getElementById('error').classList.add('hidden');
                 document.getElementById('app').classList.remove('hidden');
+
+                // Show fallback notice if using fallback location
+                if (this.usingFallback) {
+                    this.showFallbackNotice();
+                }
 
                 // Initialize map
                 this.initMap();
@@ -355,26 +428,21 @@
                 this.initNotifications();
             },
 
-            // Handle location error
-            handleLocationError(error) {
-                let message = 'Unable to retrieve your location';
-                
-                switch (error.code) {
-                    case error.PERMISSION_DENIED:
-                        message = 'Location permission denied';
-                        break;
-                    case error.POSITION_UNAVAILABLE:
-                        message = 'Location information unavailable';
-                        break;
-                    case error.TIMEOUT:
-                        message = 'Location request timed out';
-                        break;
-                }
-
-                this.showError(message);
+            // Show fallback location notice
+            showFallbackNotice() {
+                const infoPanel = document.querySelector('.info-panel');
+                const fallbackNotice = document.createElement('div');
+                fallbackNotice.className = 'fallback-notice';
+                fallbackNotice.innerHTML = `
+                    <div class="fallback-icon">ℹ️</div>
+                    <p><strong>Using Default Location</strong></p>
+                    <p>${this.fallbackMessage}</p>
+                    <p>Showing SCE Corporate Headquarters: 2244 Walnut Grove Ave, Rosemead, CA 91770</p>
+                `;
+                infoPanel.insertBefore(fallbackNotice, infoPanel.firstChild);
             },
 
-            // Show error overlay
+            // Show error overlay (kept for backward compatibility)
             showError(message) {
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('error').classList.remove('hidden');
@@ -383,6 +451,10 @@
 
             // Initialize Leaflet map
             initMap() {
+                const markerLabel = this.usingFallback 
+                    ? 'SCE Headquarters (Fallback Location)' 
+                    : 'Your Location';
+
                 this.map = L.map('map').setView(
                     [this.userLocation.lat, this.userLocation.lng], 
                     13
@@ -395,7 +467,7 @@
 
                 L.marker([this.userLocation.lat, this.userLocation.lng])
                     .addTo(this.map)
-                    .bindPopup('Your Location')
+                    .bindPopup(markerLabel)
                     .openPopup();
             },
 

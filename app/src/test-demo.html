@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outage Map - Demo</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, sans-serif;
+        }
+        .demo-banner {
+            background: #ffc107;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+        }
+        iframe {
+            width: 100%;
+            height: calc(100vh - 40px);
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-banner">DEMO MODE - Using LA coordinates (33.5, -118.0) - Outage will be detected</div>
+    <iframe src="/"></iframe>
+    
+    <script>
+        // Inject geolocation mock into iframe when it loads
+        const iframe = document.querySelector('iframe');
+        iframe.addEventListener('load', function() {
+            const iframeWindow = iframe.contentWindow;
+            
+            // Mock geolocation
+            const mockGeolocation = {
+                getCurrentPosition: function(success, error) {
+                    success({
+                        coords: {
+                            latitude: 33.5,
+                            longitude: -118.0,
+                            accuracy: 10
+                        },
+                        timestamp: Date.now()
+                    });
+                }
+            };
+            
+            try {
+                Object.defineProperty(iframeWindow.navigator, 'geolocation', {
+                    get: function() { return mockGeolocation; },
+                    configurable: true
+                });
+            } catch(e) {
+                console.log('Could not mock geolocation:', e);
+            }
+        });
+    </script>
+</body>
+</html>
